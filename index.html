@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Birsenime Çiçek</title>
+    <style>
+        /* --- Temel Ayarlar --- */
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #0f0518;
+            background: radial-gradient(circle at center, #2e0e24 0%, #0f0518 100%);
+            overflow: hidden;
+            font-family: sans-serif;
+        }
+
+        /* --- Ana Çiçek Taşıyıcısı --- */
+        .flower-wrapper {
+            width: 90vmin;
+            height: 90vmin;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /* Bu özellik GPU kullanımını optimize eder */
+            will-change: transform; 
+            /* Hafif bir genel parlama efekti (CSS ile daha performanslı) */
+            filter: drop-shadow(0 0 15px rgba(255, 105, 180, 0.3));
+        }
+
+        svg {
+            width: 100%;
+            height: 100%;
+            /* Tüm çiçek yavaşça döner */
+            animation: slowSpin 60s linear infinite;
+        }
+
+        /* --- Yaprak Stilleri --- */
+        .petal {
+            transform-origin: 0 0; /* Dönüş noktası merkez */
+            opacity: 0.85;
+            /* mix-blend-mode kaldırdık, kırılmayı önlemek için normal opacity kullanıyoruz */
+            transition: opacity 0.5s;
+        }
+
+        .petal:hover {
+            opacity: 1; /* Üzerine gelince parlasın */
+        }
+
+        /* --- Renk Atamaları (Gradyanlar SVG içinde tanımlı) --- */
+        .outer-petal { fill: url(#gradOuter); }
+        .middle-petal { fill: url(#gradMiddle); }
+        .inner-petal { fill: url(#gradInner); }
+
+        /* --- Merkez --- */
+        .core {
+            fill: url(#gradCore);
+            filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.6));
+            animation: coreBreath 4s ease-in-out infinite alternate;
+        }
+
+        /* --- Animasyonlar --- */
+        @keyframes slowSpin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Yaprakların yumuşak hareketi */
+        @keyframes gentleFloat {
+            0% { transform: rotate(var(--angle)) scale(1); }
+            50% { transform: rotate(var(--angle)) scale(1.05) translate(0, -2%); }
+            100% { transform: rotate(var(--angle)) scale(1); }
+        }
+
+        @keyframes coreBreath {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.1); }
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="flower-wrapper">
+    <svg viewBox="-250 -250 500 500" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <linearGradient id="gradOuter" x1="0%" y1="100%" x2="0%" y2="0%">
+                <stop offset="0%" stop-color="#4a1a38" />
+                <stop offset="50%" stop-color="#9c27b0" />
+                <stop offset="100%" stop-color="#e91e63" />
+            </linearGradient>
+
+            <linearGradient id="gradMiddle" x1="0%" y1="100%" x2="0%" y2="0%">
+                <stop offset="10%" stop-color="#d81b60" />
+                <stop offset="60%" stop-color="#ff8a80" />
+                <stop offset="100%" stop-color="#ffccbc" />
+            </linearGradient>
+
+            <linearGradient id="gradInner" x1="0%" y1="100%" x2="0%" y2="0%">
+                <stop offset="0%" stop-color="#ffb74d" />
+                <stop offset="100%" stop-color="#fff9c4" />
+            </linearGradient>
+
+            <radialGradient id="gradCore">
+                <stop offset="30%" stop-color="#ffd54f" />
+                <stop offset="100%" stop-color="#ff6f00" />
+            </radialGradient>
+
+            <path id="petal-path" d="M0,0 C-40,-60 -50,-120 0,-150 C50,-120 40,-60 0,0" />
+        </defs>
+
+        <g id="g-outer"></g>
+        <g id="g-middle" transform="rotate(15) scale(0.85)"></g>
+        <g id="g-inner" transform="rotate(30) scale(0.6)"></g>
+
+        <circle class="core" cx="0" cy="0" r="18" />
+    </svg>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        // Ayarlar
+        const config = [
+            { id: 'g-outer', count: 18, class: 'outer-petal', durationRange: [5, 7] },
+            { id: 'g-middle', count: 14, class: 'middle-petal', durationRange: [4, 6] },
+            { id: 'g-inner', count: 10, class: 'inner-petal', durationRange: [3, 5] }
+        ];
+
+        const petalHref = '#petal-path';
+
+        config.forEach(conf => {
+            const group = document.getElementById(conf.id);
+            const angleStep = 360 / conf.count;
+
+            for (let i = 0; i < conf.count; i++) {
+                const angle = i * angleStep;
+                const petal = document.createElementNS("http://www.w3.org/2000/svg", "use");
+                
+                petal.setAttributeNS("http://www.w3.org/1999/xlink", "href", petalHref);
+                petal.classList.add('petal', conf.class);
+
+                // Açıyı CSS değişkeni olarak ata
+                petal.style.setProperty('--angle', `${angle}deg`);
+
+                // Rastgele Animasyon Süresi (Doğallık için)
+                const duration = conf.durationRange[0] + Math.random() * (conf.durationRange[1] - conf.durationRange[0]);
+                const delay = Math.random() * -5; // Negatif delay animasyonun ortasından başlatır (bekleme olmaz)
+
+                // Animasyonu ata
+                petal.style.animation = `gentleFloat ${duration}s ease-in-out ${delay}s infinite alternate`;
+                
+                // İlk pozisyonu ayarla
+                petal.setAttribute("transform", `rotate(${angle})`);
+
+                group.appendChild(petal);
+            }
+        });
+    });
+</script>
+
+</body>
+</html>
